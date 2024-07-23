@@ -1,0 +1,29 @@
+<sw-page>
+    <template #smart-bar-actions>
+        <sw-button
+            :router-link="{ name: 'theme.template.create' }"
+            variant="primary"
+        >
+            Create Template
+        </sw-button>
+    </template>
+
+    <template #content>
+            <sw-entity-listing
+                v-if="templates"
+                :items="templates"
+                :columns="templateColumns"
+                :repository="templateRepository"
+                :full-page="true"
+                :is-loading="isLoading"
+                :show-selection="false"
+                detail-route="theme.template.detail"
+            >
+                <template #column-name="{ item }">
+                    <router-link :to="`/theme/template/detail/${ item.id }`">
+                        {{ item.name }}
+                    </router-link>
+                </template>
+            </sw-entity-listing>
+    </template>
+</sw-page>

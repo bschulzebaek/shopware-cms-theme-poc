@@ -1,0 +1,24 @@
+<sw-page>
+    <template #smart-bar-header><h2 v-if="template">{{ template.label }}</h2></template>
+    <template #smart-bar-actions>
+        <sw-button
+            variant="primary"
+            :is-loading="isLoading"
+            :disabled="!isValidConfig"
+            @click="onSave"
+        >
+           Save
+        </sw-button>
+    </template>
+
+    <template #content>
+        <sw-card>
+            <template v-if="template">
+                <sw-switch-field label="Active" v-model:value="template.active" />
+                <mt-text-field label="Name (TwigRenderer path)" placeholder="@BundleName/path/to/template.html.twig" v-model="template.name" />
+                <mt-text-field label="Label (Human-readable name)" v-model="template.label" />
+                <mt-textarea label="Content" v-model="template.content" />
+            </template>
+        </sw-card>
+    </template>
+</sw-page>
