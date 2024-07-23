@@ -12,6 +12,7 @@
 
         <service id="CmsPoc\Storefront\DatabaseTwigLoader">
             <argument type="service" id="theme_template.repository" />
+            <tag name="twig.loader" />
         </service>
     </services>
 </container>

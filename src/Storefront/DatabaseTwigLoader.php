@@ -7,6 +7,7 @@ use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Error\LoaderError;
 use Twig\Loader\LoaderInterface;
 use Twig\Source;
@@ -18,12 +19,11 @@ class DatabaseTwigLoader implements LoaderInterface
      * @param EntityRepository<ThemeTemplateEntity> $themeTemplateRepository
      */
     public function __construct(
-        private readonly EntityRepository $themeTemplateRepository
+        private readonly EntityRepository $themeTemplateRepository,
     )
     {
 
     }
-
 
     public function getSourceContext($name): Source
     {
@@ -48,7 +48,7 @@ class DatabaseTwigLoader implements LoaderInterface
     {
         $this->throwIfNotExists($name);
 
-        return true;
+        return false;
     }
 
     public function exists(string $name): bool
@@ -59,6 +59,7 @@ class DatabaseTwigLoader implements LoaderInterface
     private function buildCriteria(string $name): Criteria
     {
         $criteria = new Criteria();
+        // Filter for current sales_channel.theme.id -> add to Entity!
         $criteria->addFilter(new EqualsFilter('name', $name));
 //        $criteria->addFilter(new EqualsFilter('active', true));
 
