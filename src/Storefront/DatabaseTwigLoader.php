@@ -61,7 +61,7 @@ class DatabaseTwigLoader implements LoaderInterface
         $criteria = new Criteria();
         // Filter for current sales_channel.theme.id -> add to Entity!
         $criteria->addFilter(new EqualsFilter('name', $name));
-//        $criteria->addFilter(new EqualsFilter('active', true));
+        $criteria->addFilter(new EqualsFilter('active', true));
 
         return $criteria;
     }
