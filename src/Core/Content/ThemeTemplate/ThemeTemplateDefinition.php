@@ -4,6 +4,7 @@ namespace CmsPoc\Core\Content\ThemeTemplate;
 
 use Shopware\Core\Framework\DataAbstractionLayer\EntityDefinition;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\AllowHtml;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\LongTextField;
 use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\BoolField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\PrimaryKey;
@@ -36,7 +37,7 @@ class ThemeTemplateDefinition extends EntityDefinition
             (new IdField('id', 'id'))->addFlags(new Required(), new PrimaryKey()),
             (new StringField('name', 'name')),
             (new StringField('label', 'label')),
-            (new StringField('content', 'content'))->addFlags(new AllowHtml(false)),
+            (new LongTextField('content', 'content'))->addFlags(new AllowHtml(false)),
             (new BoolField('active', 'active'))
         ]);
     }
