@@ -2,79 +2,105 @@
 
 namespace CmsPoc\Storefront;
 
-use CmsPoc\Core\Content\ThemeTemplate\ThemeTemplateEntity;
-use Shopware\Core\Framework\Context;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use CmsPoc\Core\TemplateIndexerSubscriber;
+use Doctrine\DBAL\Connection;
+use League\Flysystem\FilesystemOperator;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Profiling\Profiler;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Twig\Error\LoaderError;
 use Twig\Loader\LoaderInterface;
 use Twig\Source;
 
 class DatabaseTwigLoader implements LoaderInterface
 {
 
-    /**
-     * @param EntityRepository<ThemeTemplateEntity> $themeTemplateRepository
-     */
+    private array $templateIndex = [];
+    private int $lastRead = 0;
+
     public function __construct(
-        private readonly EntityRepository $themeTemplateRepository,
+        private readonly Connection $connection,
+        private readonly FilesystemOperator $fs
     )
     {
-
     }
 
     public function getSourceContext($name): Source
     {
         return Profiler::trace('DatabaseTwigLoader::getSourceContext', function () use ($name) {
-            /** @var ThemeTemplateEntity $template  */
-            $template = $this->themeTemplateRepository->search($this->buildCriteria($name), Context::createDefaultContext())->first();
+            $content = $this->connection->fetchAssociative('SELECT content FROM theme_template WHERE name = :name AND active = 1', ['name' => $name])['content'] ?? null;
 
-            if (!$template) {
+            if (!$content) {
                 throw new \LogicException(sprintf('Failed to load template "%s"!', $name));
             }
 
-            return new Source($template->getContent(), $name);
-        });
+            return new Source($content, $name);
+        }, 'ThemeTemplates');
     }
 
     public function getCacheKey($name): string
     {
-        $this->throwIfNotExists($name);
-
         return $name;
     }
 
     public function isFresh(string $name, int $time): bool
     {
-        $this->throwIfNotExists($name);
-
-        return false;
+        return $time >= $this->lastRead;
     }
 
     public function exists(string $name): bool
     {
         return Profiler::trace('DatabaseTwigLoader::exists', function () use ($name) {
-            return $this->themeTemplateRepository->searchIds($this->buildCriteria($name), Context::createDefaultContext())->getTotal() > 0;
-        });
+//            return $this->exists_naive($name);
+            return $this->exists_in_index_file($name);
+        }, 'ThemeTemplates');
+    }
+
+    private function exists_naive(string $name): bool
+    {
+        return $this->connection->fetchOne('SELECT 1 FROM theme_template WHERE name = :name AND active = 1', ['name' => $name]) !== false;
+    }
+
+    private function exists_in_index_file(string $name): bool
+    {
+        $lastMod = $this->getLastIndexModification();
+
+        if ($lastMod > $this->lastRead) {
+            $this->updateTemplateIndexFromFile($lastMod);
+        }
+
+        return $this->templateIndex[$name] ?? false;
+    }
+
+    private function updateTemplateIndexFromFile(int $lastMod): void
+    {
+        if ($this->fs->has(TemplateIndexerSubscriber::INDEX_FILE) === false) {
+            $this->templateIndex = [];
+
+            return;
+        }
+
+        $content = $this->fs->read(TemplateIndexerSubscriber::INDEX_FILE);
+        $names = explode(PHP_EOL, $content);
+        $names = array_filter($names);
+        $names = array_fill_keys($names, true);
+
+        $this->templateIndex = $names;
+        $this->lastRead = $lastMod;
+    }
+
+    private function getLastIndexModification(): int
+    {
+        if (!$this->fs->has(TemplateIndexerSubscriber::INDEX_FILE)) {
+            return 0;
+        }
+
+        return $this->fs->lastModified(TemplateIndexerSubscriber::INDEX_FILE);
     }
 
     private function buildCriteria(string $name): Criteria
     {
-        $criteria = new Criteria();
-        // Filter for current sales_channel.theme.id -> add to Entity!
-        $criteria->addFilter(new EqualsFilter('name', $name));
-        $criteria->addFilter(new EqualsFilter('active', true));
-
-        return $criteria;
-    }
-
-    private function throwIfNotExists(string $name): void
-    {
-        if (!$this->exists($name)) {
-            throw new LoaderError(sprintf('Template "%s" is not defined.', $name));
-        }
+        return (new Criteria())
+            ->addFilter(new EqualsFilter('name', $name))
+            ->addFilter(new EqualsFilter('active', true));
     }
 }

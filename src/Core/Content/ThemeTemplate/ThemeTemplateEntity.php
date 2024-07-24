@@ -7,6 +7,8 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityIdTrait;
 
 class ThemeTemplateEntity extends Entity
 {
+    final public const ENTITY_NAME = 'theme_template';
+
     use EntityIdTrait;
 
     protected string $name;
