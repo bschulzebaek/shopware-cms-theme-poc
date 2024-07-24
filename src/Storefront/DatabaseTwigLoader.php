@@ -7,6 +7,7 @@ use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\Profiling\Profiler;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Error\LoaderError;
 use Twig\Loader\LoaderInterface;
@@ -27,14 +28,16 @@ class DatabaseTwigLoader implements LoaderInterface
 
     public function getSourceContext($name): Source
     {
-        /** @var ThemeTemplateEntity $template  */
-        $template = $this->themeTemplateRepository->search($this->buildCriteria($name), Context::createDefaultContext())->first();
+        return Profiler::trace('DatabaseTwigLoader::getSourceContext', function () use ($name) {
+            /** @var ThemeTemplateEntity $template  */
+            $template = $this->themeTemplateRepository->search($this->buildCriteria($name), Context::createDefaultContext())->first();
 
-        if (!$template) {
-            throw new \LogicException(sprintf('Failed to load template "%s"!', $name));
-        }
+            if (!$template) {
+                throw new \LogicException(sprintf('Failed to load template "%s"!', $name));
+            }
 
-        return new Source($template->getContent(), $name);
+            return new Source($template->getContent(), $name);
+        });
     }
 
     public function getCacheKey($name): string
@@ -53,7 +56,9 @@ class DatabaseTwigLoader implements LoaderInterface
 
     public function exists(string $name): bool
     {
-        return $this->themeTemplateRepository->searchIds($this->buildCriteria($name), Context::createDefaultContext())->getTotal() > 0;
+        return Profiler::trace('DatabaseTwigLoader::exists', function () use ($name) {
+            return $this->themeTemplateRepository->searchIds($this->buildCriteria($name), Context::createDefaultContext())->getTotal() > 0;
+        });
     }
 
     private function buildCriteria(string $name): Criteria
