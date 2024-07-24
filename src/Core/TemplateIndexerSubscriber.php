@@ -2,7 +2,6 @@
 
 namespace CmsPoc\Core;
 
-
 use CmsPoc\Core\Content\ThemeTemplate\ThemeTemplateEntity;
 use League\Flysystem\FilesystemOperator;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
@@ -76,7 +75,6 @@ class TemplateIndexerSubscriber implements EventSubscriberInterface
         if ($this->fs->has(TemplateIndexerSubscriber::INDEX_FILE)) {
             $content = $this->fs->read(TemplateIndexerSubscriber::INDEX_FILE);
         }
-
 
         foreach ($names as $name) {
             $line = $name . PHP_EOL;

@@ -5,15 +5,12 @@ namespace CmsPoc\Storefront;
 use CmsPoc\Core\TemplateIndexerSubscriber;
 use Doctrine\DBAL\Connection;
 use League\Flysystem\FilesystemOperator;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Profiling\Profiler;
 use Twig\Loader\LoaderInterface;
 use Twig\Source;
 
 class DatabaseTwigLoader implements LoaderInterface
 {
-
     private array $templateIndex = [];
     private int $lastRead = 0;
 
@@ -73,6 +70,8 @@ class DatabaseTwigLoader implements LoaderInterface
 
     private function updateTemplateIndexFromFile(int $lastMod): void
     {
+        $this->lastRead = $lastMod;
+
         if ($this->fs->has(TemplateIndexerSubscriber::INDEX_FILE) === false) {
             $this->templateIndex = [];
 
@@ -85,7 +84,6 @@ class DatabaseTwigLoader implements LoaderInterface
         $names = array_fill_keys($names, true);
 
         $this->templateIndex = $names;
-        $this->lastRead = $lastMod;
     }
 
     private function getLastIndexModification(): int
@@ -95,12 +93,5 @@ class DatabaseTwigLoader implements LoaderInterface
         }
 
         return $this->fs->lastModified(TemplateIndexerSubscriber::INDEX_FILE);
-    }
-
-    private function buildCriteria(string $name): Criteria
-    {
-        return (new Criteria())
-            ->addFilter(new EqualsFilter('name', $name))
-            ->addFilter(new EqualsFilter('active', true));
     }
 }
