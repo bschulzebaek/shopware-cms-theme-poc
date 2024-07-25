@@ -25,6 +25,7 @@ class DatabaseTwigLoader implements LoaderInterface, ResetInterface
     {
     }
 
+    // TODO: When is this called? cache:clear? ..?
     public function reset(): void
     {
         $this->cache->delete(self::CACHE_KEY_INDEX);
@@ -59,8 +60,8 @@ class DatabaseTwigLoader implements LoaderInterface, ResetInterface
     {
         return Profiler::trace('DatabaseTwigLoader::exists', function () use ($name) {
 //            return $this->exists_naive($name);
-//            return $this->exists_in_index_file($name);
-            return $this->exists_in_cache_or_index_file($name);
+            return $this->exists_in_index_file($name);
+//            return $this->exists_in_cache($name);
         }, 'ThemeTemplates');
     }
 
@@ -71,29 +72,23 @@ class DatabaseTwigLoader implements LoaderInterface, ResetInterface
 
     private function exists_in_index_file(string $name): bool
     {
-        $index = $this->getTemplateIndex();
-
-        return $index[$name] ?? false;
+        $content = $this->fs->read(TemplateIndexerSubscriber::INDEX_FILE);
+        return str_contains($content, $name);
     }
 
-    private function exists_in_cache_or_index_file(string $name): bool
+    private function exists_in_cache(string $name): bool
     {
         $index = $this->cache->get(self::CACHE_KEY_INDEX, function () {
-            return $this->getTemplateIndex();
+            if ($this->fs->has(TemplateIndexerSubscriber::INDEX_FILE) === false) {
+                return [];
+            }
+
+            $content = $this->fs->read(TemplateIndexerSubscriber::INDEX_FILE);
+
+            return array_fill_keys(array_filter(explode(PHP_EOL, $content)), true);
         });
 
         return $index[$name] ?? false;
-    }
-
-    private function getTemplateIndex(): array
-    {
-        if ($this->fs->has(TemplateIndexerSubscriber::INDEX_FILE) === false) {
-            return [];
-        }
-
-        $content = $this->fs->read(TemplateIndexerSubscriber::INDEX_FILE);
-
-        return array_fill_keys(array_filter(explode(PHP_EOL, $content)), true);
     }
 
     private function getLastIndexModification(): int

@@ -11,17 +11,14 @@ The `Shopware\Core\Framework\Adapter\Twig\TemplateFinder` is checking for the ex
     * Create index per theme.id?
 
 ### Maintaining the template index
-
-TODO
+* TODO: When to update the index?
 
 ### Loader performance
-
-TODO
-
-### App Cache
-
 TODO
 
 ### Notes
 * How does this impact other renderers, such as Email / App Script / Document?
 * Writing HTML to the Database
+
+### Example Index
+For using the `example/template-index` (faking 10k possible templates) file, copy it to `<shopware-root>/files/` 
