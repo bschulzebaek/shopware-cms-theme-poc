@@ -72,8 +72,8 @@ class TemplateIndexerSubscriber implements EventSubscriberInterface
     private function appendToIndexFile(array $names): void {
         $content = '';
 
-        if ($this->fs->has(TemplateIndexerSubscriber::INDEX_FILE)) {
-            $content = $this->fs->read(TemplateIndexerSubscriber::INDEX_FILE);
+        if ($this->fs->has(self::INDEX_FILE)) {
+            $content = $this->fs->read(self::INDEX_FILE);
         }
 
         foreach ($names as $name) {
@@ -85,20 +85,20 @@ class TemplateIndexerSubscriber implements EventSubscriberInterface
             $content .= $line;
         }
 
-        $this->fs->write(TemplateIndexerSubscriber::INDEX_FILE, $content);
+        $this->fs->write(self::INDEX_FILE, $content);
     }
 
     private function removeFromIndexFile(array $names): void {
-        if (!$this->fs->has(TemplateIndexerSubscriber::INDEX_FILE)) {
+        if (!$this->fs->has(self::INDEX_FILE)) {
             return;
         }
 
-        $content = $this->fs->read(TemplateIndexerSubscriber::INDEX_FILE);
+        $content = $this->fs->read(self::INDEX_FILE);
 
         foreach ($names as $name) {
             $content = str_replace($name . PHP_EOL, '', $content);
         }
 
-        $this->fs->write(TemplateIndexerSubscriber::INDEX_FILE, $content);
+        $this->fs->write(self::INDEX_FILE, $content);
     }
 }
